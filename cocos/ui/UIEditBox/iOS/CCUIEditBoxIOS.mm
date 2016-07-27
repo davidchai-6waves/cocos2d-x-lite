@@ -57,7 +57,7 @@
         _editState = NO;
         self.frameRect = frameRect;
         self.editBox = editBox;
-        self.dataInputMode = cocos2d::ui::EditBox::InputFlag::INITIAL_CAPS_ALL_CHARACTERS;
+        self.dataInputMode = cocos2d::ui::EditBox::InputFlag::LOWERCASE_ALL_CHARACTERS;
         self.keyboardReturnType = cocos2d::ui::EditBox::KeyboardReturnType::DEFAULT;
 
         [self createMultiLineTextField];
@@ -204,8 +204,13 @@
 
         case cocos2d::ui::EditBox::InputFlag::SENSITIVE:
             self.textInput.autocorrectionType = UITextAutocorrectionTypeNo;
+            self.textInput.autocapitalizationType = UITextAutocapitalizationTypeNone;
             break;
-
+            
+        case cocos2d::ui::EditBox::InputFlag::LOWERCASE_ALL_CHARACTERS:
+            self.textInput.autocapitalizationType = UITextAutocapitalizationTypeNone;
+            break;
+            
         default:
             break;
     }
@@ -300,9 +305,11 @@
 
 - (BOOL)textFieldShouldReturn:(UITextField *)sender
 {
+    getEditBoxImplIOS()->editBoxEditingReturn();
     if (sender == self.textInput) {
         [sender resignFirstResponder];
     }
+
     return NO;
 }
 
@@ -350,6 +357,10 @@
     if (maxLength < 0)
     {
         return YES;
+    }
+    
+    if ([text isEqualToString:[NSString stringWithUTF8String:"\n"]]) {
+        getEditBoxImplIOS()->editBoxEditingReturn();
     }
 
     // Prevent crashing undo bug http://stackoverflow.com/questions/433337/set-the-maximum-character-length-of-a-uitextfield

@@ -115,20 +115,23 @@ public:
         //uv computation should take spritesheet into account.
         float u0, u3;
         float v0, v3;
-        
+        float texStrech = 0;
+#if CC_FIX_ARTIFACTS_BY_STRECHING_TEXEL
+        texStrech = 0.5;
+#endif
         if (spriteFrame->isRotated()) {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.height) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.height - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.width) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.width - texStrech) / atlasHeight;
         }
         else {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.width) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.width - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.height) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.height - texStrech) / atlasHeight;
         }
         
         std::vector<cocos2d::Vec2> uvCoordinates(2);
@@ -244,28 +247,32 @@ public:
         //uv computation should take spritesheet into account.
         float u0, u1, u2, u3;
         float v0, v1, v2, v3;
+        float texStrech = 0;
+#if CC_FIX_ARTIFACTS_BY_STRECHING_TEXEL
+        texStrech = 0.5;
+#endif
         
         if (spriteFrame->isRotated()) {
-            u0 = textureRect.origin.x / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
             u1 = (bottomHeight + textureRect.origin.x) / atlasWidth;
             u2 = (bottomHeight + centerHeight + textureRect.origin.x) / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.height) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.height - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
             v1 = (leftWidth + textureRect.origin.y) / atlasHeight;
             v2 = (leftWidth + centerWidth + textureRect.origin.y) / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.width) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.width - texStrech) / atlasHeight;
         }
         else {
-            u0 = textureRect.origin.x / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
             u1 = (leftWidth + textureRect.origin.x) / atlasWidth;
             u2 = (leftWidth + centerWidth + textureRect.origin.x) / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.width) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.width - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
             v1 = (topHeight + textureRect.origin.y) / atlasHeight;
             v2 = (topHeight + centerHeight + textureRect.origin.y) / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.height) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.height - texStrech) / atlasHeight;
         }
         
         std::vector<cocos2d::Vec2> uvCoordinates(4);
@@ -296,12 +303,15 @@ public:
         auto hRepeat = contentSize.width / rectWidth;
         auto vRepeat = contentSize.height / rectHeight;
         
-        quads.resize(ceilf(hRepeat) * ceilf(vRepeat));
         int quadIndex = 0;
+        if(ceilf(hRepeat) * ceilf(vRepeat) > (65536 / 4)) {
+            CCLOGERROR("too many tiles, only 16384 tiles will be show");
+        }
+        quads.resize(fminf(ceilf(hRepeat) * ceilf(vRepeat), 65536 / 4));
         for (int hindex = 0; hindex < ceilf(hRepeat); ++hindex) {
             for (int vindex = 0; vindex < ceilf(vRepeat); ++vindex) {
                 auto& quad = quads[quadIndex++];
-                
+    
                 quad.bl.colors = colorOpacity;
                 quad.br.colors = colorOpacity;
                 quad.tl.colors = colorOpacity;
@@ -324,6 +334,7 @@ public:
                     quad.tr.texCoords = cocos2d::Tex2F(u0 + (u1 - u0) * fminf(1, vRepeat - vindex), v1 + (v0 - v1) * fminf(1, hRepeat - hindex));
                     
                 }
+                if(quadIndex >= quads.size()) break;
             }
         }
         return quads;
@@ -339,19 +350,24 @@ public:
         float u0, u3;
         float v0, v3;
         
+        float texStrech = 0;
+#if CC_FIX_ARTIFACTS_BY_STRECHING_TEXEL
+        texStrech = 0.5;
+#endif
+        
         if (spriteFrame->isRotated()) {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.height) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.height - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.width) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.width - texStrech) / atlasHeight;
         }
         else {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.width) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech)/ atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.width - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.height) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.height - texStrech) / atlasHeight;
         }
         
         std::vector<cocos2d::Vec2> uvCoordinates(2);
@@ -492,19 +508,24 @@ public:
         float u0, u3;
         float v0, v3;
         
+        float texStrech = 0;
+#if CC_FIX_ARTIFACTS_BY_STRECHING_TEXEL
+        texStrech = 0.5;
+#endif
+        
         if (spriteFrame->isRotated()) {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.height) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech)/ atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.height - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.width) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.width - texStrech) / atlasHeight;
         }
         else {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.width) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.width - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.height) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.height - texStrech) / atlasHeight;
         }
         std::vector<cocos2d::Vec2> uvs(2);
         uvs[0] = cocos2d::Vec2(u0,v3);
@@ -822,19 +843,24 @@ public:
         float u0, u3;
         float v0, v3;
         
+        float texStrech = 0;
+#if CC_FIX_ARTIFACTS_BY_STRECHING_TEXEL
+        texStrech = 0.5;
+#endif
+        
         if (spriteFrame->isRotated()) {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.height) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.height - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.width) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.width - texStrech) / atlasHeight;
         }
         else {
-            u0 = textureRect.origin.x / atlasWidth;
-            u3 = (textureRect.origin.x + textureRect.size.width) / atlasWidth;
+            u0 = (textureRect.origin.x + texStrech) / atlasWidth;
+            u3 = (textureRect.origin.x + textureRect.size.width - texStrech) / atlasWidth;
             
-            v0 = textureRect.origin.y / atlasHeight;
-            v3 = (textureRect.origin.y + textureRect.size.height) / atlasHeight;
+            v0 = (textureRect.origin.y + texStrech) / atlasHeight;
+            v3 = (textureRect.origin.y + textureRect.size.height - texStrech) / atlasHeight;
         }
         
         this->_uvs[0].x = u0;

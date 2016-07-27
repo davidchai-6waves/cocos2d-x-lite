@@ -11,7 +11,6 @@
             "exclude":[
                "proj.android/bin",
                "proj.android/assets",
-               "proj.android/libs",
                "proj.ios_mac/HelloJavascript.xcodeproj/project.xcworkspace",
                "proj.ios_mac/HelloJavascript.xcodeproj/xcuserdata",
                "proj.win32/Debug.win32",
@@ -19,6 +18,15 @@
                "proj.win32/HelloJavascript.sdf"
             ]
          },
+         "append_dir":[
+            {
+               "from":"extensions/anysdk/js-bindings/",
+               "to":"frameworks/runtime-src/Classes",
+               "include": [
+                  "*"
+               ]
+            }
+         ],
          "append_x_engine":{
             "from":".",
             "to":"frameworks/cocos2d-x"
@@ -46,6 +54,7 @@
                "frameworks/runtime-src/proj.android/build.xml",
                "frameworks/runtime-src/proj.android/res/values/strings.xml",
                "frameworks/runtime-src/proj.android-studio/settings.gradle",
+               "frameworks/runtime-src/proj.android-studio/app/res/values/strings.xml",
                "frameworks/runtime-src/proj.ios_mac/ios/main.m",
                "frameworks/runtime-src/proj.ios_mac/ios/Prefix.pch",
                "frameworks/runtime-src/proj.ios_mac/PROJECT_NAME.xcodeproj/project.pbxproj",

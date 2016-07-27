@@ -380,6 +380,22 @@ bool JSB_core_restartVM(JSContext *cx, uint32_t argc, jsval *vp)
     return true;
 };
 
+bool JSB_closeWindow(JSContext *cx, uint32_t argc, jsval *vp)
+{
+    EventListenerCustom* _event = Director::getInstance()->getEventDispatcher()->addCustomEventListener(Director::EVENT_AFTER_DRAW, [&](EventCustom *event) {
+        Director::getInstance()->getEventDispatcher()->removeEventListener(_event);
+        _event->release();
+
+        ScriptingCore::getInstance()->cleanup();
+    });
+    _event->retain();
+    Director::getInstance()->end();
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    exit(0);
+#endif
+    return true;
+};
+
 void registerDefaultClasses(JSContext* cx, JS::HandleObject global) {
     // first, try to get the ns
     JS::RootedValue nsval(cx);
@@ -425,6 +441,7 @@ void registerDefaultClasses(JSContext* cx, JS::HandleObject global) {
     JS_DefineFunction(cx, global, "__restartVM", JSB_core_restartVM, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
     JS_DefineFunction(cx, global, "__cleanScript", JSB_cleanScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
     JS_DefineFunction(cx, global, "__isObjectValid", ScriptingCore::isObjectValid, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    JS_DefineFunction(cx, global, "close", JSB_closeWindow, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
 static void sc_finalize(JSFreeOp *freeOp, JSObject *obj) {
@@ -604,6 +621,7 @@ void ScriptingCore::createGlobalContext() {
         sc_register_sth callback = *it;
         callback(_cx, _global.ref());
     }
+    _needCleanup = true;
 }
 
 static std::string RemoveFileExt(const std::string& filePath) {
@@ -843,6 +861,10 @@ void ScriptingCore::recordJSRelease(cocos2d::Ref *object)
 
 void ScriptingCore::cleanup()
 {
+    if (!_needCleanup) {
+         return;
+    }
+
     if(_runLoop)
     {
         delete _runLoop;
@@ -888,6 +910,8 @@ void ScriptingCore::cleanup()
     _js_global_type_map.clear();
     cleanAllScript();
     registrationList.clear();
+
+    _needCleanup = false;
 }
 
 void ScriptingCore::reportError(JSContext *cx, const char *message, JSErrorReport *report)
@@ -902,7 +926,7 @@ void ScriptingCore::reportError(JSContext *cx, const char *message, JSErrorRepor
         __android_log_print(ANDROID_LOG_ERROR, "cocos js error:", "%s line:%u msg:%s",
                             fileName.c_str(), report->lineno, msg.c_str());
 #else
-        printf("%s:%u:%s\n", fileName.c_str(), report->lineno, msg.c_str());
+        cocos2d::log("%s:%u:%s\n", fileName.c_str(), report->lineno, msg.c_str());
 #endif
         // Should clear pending exception, otherwise it will trigger infinite loop
         if (JS_IsExceptionPending(cx)) {
@@ -1640,21 +1664,26 @@ bool ScriptingCore::callFunctionName(JS::HandleObject thisObj, const char* funcN
 
 void SimpleRunLoop::update(float dt)
 {
-    g_qMutex.lock();
-    size_t size = g_queue.size();
-    g_qMutex.unlock();
-
-    auto sc = ScriptingCore::getInstance();
-    while (size > 0)
+    std::string message;
+    size_t messageCount = 0;
+    while (true)
     {
         g_qMutex.lock();
-        auto first = g_queue.begin();
-        std::string str = *first;
-        g_queue.erase(first);
-        size = g_queue.size();
+        messageCount = g_queue.size();
+        if (messageCount > 0)
+        {
+            auto first = g_queue.begin();
+            message = *first;
+            g_queue.erase(first);
+            --messageCount;
+        }
         g_qMutex.unlock();
-
-        sc->debugProcessInput(str);
+        
+        if (!message.empty())
+            ScriptingCore::getInstance()->debugProcessInput(message);
+        
+        if (messageCount == 0)
+            break;
     }
 }
 
@@ -1672,21 +1701,26 @@ void ScriptingCore::debugProcessInput(const std::string& str)
 
 static bool NS_ProcessNextEvent()
 {
-    g_qMutex.lock();
-    size_t size = g_queue.size();
-    g_qMutex.unlock();
-
-    auto sc = ScriptingCore::getInstance();
-    while (size > 0)
+     std::string message;
+    size_t messageCount = 0;
+    while (true)
     {
         g_qMutex.lock();
-        auto first = g_queue.begin();
-        std::string str = *first;
-        g_queue.erase(first);
-        size = g_queue.size();
+        messageCount = g_queue.size();
+        if (messageCount > 0)
+        {
+            auto first = g_queue.begin();
+            message = *first;
+            g_queue.erase(first);
+            --messageCount;
+        }
         g_qMutex.unlock();
-
-        sc->debugProcessInput(str);
+        
+        if (!message.empty())
+            ScriptingCore::getInstance()->debugProcessInput(message);
+        
+        if (messageCount == 0)
+            break;
     }
 //    std::this_thread::yield();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -1826,6 +1860,11 @@ static void serverEntryPoint(unsigned int port)
 
     listen(s, 1);
 
+#define MAX_RECEIVED_SIZE 1024
+#define BUF_SIZE MAX_RECEIVED_SIZE + 1
+    
+    char buf[BUF_SIZE] = {0};
+    int readBytes = 0;
     while (true) {
         clientSocket = accept(s, NULL, NULL);
 
@@ -1842,10 +1881,8 @@ static void serverEntryPoint(unsigned int port)
             inData = "connected";
             // process any input, send any output
             clearBuffers();
-
-            char buf[1024] = {0};
-            int readBytes = 0;
-            while ((readBytes = (int)::recv(clientSocket, buf, sizeof(buf), 0)) > 0)
+            
+            while ((readBytes = (int)::recv(clientSocket, buf, MAX_RECEIVED_SIZE, 0)) > 0)
             {
                 buf[readBytes] = '\0';
                 // TRACE_DEBUGGER_SERVER("debug server : received command >%s", buf);
@@ -1859,6 +1896,9 @@ static void serverEntryPoint(unsigned int port)
             cc_closesocket(clientSocket);
         }
     } // while(true)
+    
+#undef BUF_SIZE
+#undef MAX_RECEIVED_SIZE
 }
 
 bool JSBDebug_BufferWrite(JSContext* cx, unsigned argc, jsval* vp)
