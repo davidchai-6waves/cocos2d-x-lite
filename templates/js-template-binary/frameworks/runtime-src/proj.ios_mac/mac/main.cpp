@@ -1,6 +1,5 @@
 /****************************************************************************
- Copyright (c) 2010-2012 cocos2d-x.org
- Copyright (c) 2013-2016 zilongshanren
+ Copyright (c) 2010 cocos2d-x.org
  
  http://www.cocos2d-x.org
  
@@ -23,14 +22,13 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#import <AppKit/AppKit.h>
-#include "ui/UIEditBox/Mac/CCUITextInput.h"
+#include "AppDelegate.h"
+#include "cocos2d.h"
 
-@interface CCUIPasswordTextField : NSTextField<CCUITextInput>
+USING_NS_CC;
+
+int main(int argc, char *argv[])
 {
-    NSMutableDictionary* _placeholderAttributes;
+    AppDelegate app;
+    return Application::getInstance()->run();
 }
-
-@end
-
-
