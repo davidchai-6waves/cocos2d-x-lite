@@ -169,6 +169,11 @@ private:
     bool _letterVisible;
 };
 
+void Label::setColor(const cocos2d::Color3B &color)
+{
+    this->setTextColor(Color4B(color));
+}
+
 Label* Label::create()
 {
     auto ret = new (std::nothrow) Label;
@@ -1047,7 +1052,8 @@ void Label::enableGlow(const Color4B& glowColor)
 
 void Label::enableOutline(const Color4B& outlineColor,int outlineSize /* = -1 */)
 {
-    CCASSERT(_currentLabelType == LabelType::STRING_TEXTURE || _currentLabelType == LabelType::TTF, "Only supported system font and TTF!");
+    CCASSERT(_currentLabelType == LabelType::STRING_TEXTURE
+             || _currentLabelType == LabelType::TTF, "Only supported system font and TTF!");
 
     if (outlineSize > 0 || _currLabelEffect == LabelEffect::OUTLINE)
     {
@@ -1860,9 +1866,6 @@ void Label::setOpacityModifyRGB(bool isOpacityModifyRGB)
 void Label::updateDisplayedColor(const Color3B& parentColor)
 {
     Node::updateDisplayedColor(parentColor);
-
-    if (_currentLabelType == LabelType::TTF || _currentLabelType == LabelType::STRING_TEXTURE)
-        setTextColor(Color4B(_displayedColor));
 
     if (_textSprite)
     {

@@ -117,6 +117,7 @@ bool TMXObjectImage::_initWithMapInfo(TMXMapInfo* mapInfo)
     {
         return false;
     }
+    useTileset->_imageSize = texture->getContentSizeInPixels();
     auto rect = useTileset->getRectForGID(_container->getGid());
     initWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(rect));
     setScale(_container->getObjectSize().width / rect.size.width, _container->getObjectSize().height / rect.size.height);
@@ -155,7 +156,7 @@ void TMXObjectImage::_initPosWithMapInfo(TMXMapInfo* mapInfo)
         case TMXOrientationIso:
             {
                 setAnchorPoint(Vec2(0.5, 0));
-                auto posIdx = Vec2(_container->getOffset().x / tileSize.width * 2, _container->getOffset().y / tileSize.height);
+                auto posIdx = Vec2(_container->getOffset().x / tileSize.height, _container->getOffset().y / tileSize.height);
                 auto pos = Vec2(tileSize.width / 2 * (mapSize.width + posIdx.x - posIdx.y),
                                 tileSize.height / 2 * (mapSize.height * 2 - posIdx.x - posIdx.y));
                 setPosition(CC_POINT_PIXELS_TO_POINTS(pos));
@@ -487,7 +488,7 @@ void TMXObjectGroup::_initGroup(TMXObjectGroupInfo* groupInfo, TMXMapInfo* mapIn
     
     // remove the old objects
     auto existedObjCount = this->_objects.size();
-    for (auto i = existedObjCount; i >= 0; i--) {
+    for (auto i = existedObjCount - 1; i >= 0; i--) {
         auto obj = this->_objects.at(i);
         if (obj) {
             this->_objects.erase(i);
