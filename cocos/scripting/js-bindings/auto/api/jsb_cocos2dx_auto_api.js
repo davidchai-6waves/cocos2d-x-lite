@@ -4440,6 +4440,18 @@ event
 },
 
 /**
+ * @method hasEventListener
+ * @param {std::basic_string<char>} arg0
+ * @return {bool}
+ */
+hasEventListener : function (
+basic_string<char> 
+)
+{
+    return false;
+},
+
+/**
  * @method pauseEventListenersForTarget
  * @param {cc.Node} arg0
  * @param {bool} arg1
@@ -12020,12 +12032,14 @@ getOutlineSize : function (
 /**
  * @method setBMFontFilePath
  * @param {String} arg0
- * @param {vec2_object} arg1
- * @param {float} arg2
+ * @param {cc.SpriteFrame} arg1
+ * @param {vec2_object} arg2
+ * @param {float} arg3
  * @return {bool}
  */
 setBMFontFilePath : function (
 str, 
+spriteframe, 
 vec2, 
 float 
 )
@@ -12300,13 +12314,15 @@ color4b
 },
 
 /**
- * @method getOverflow
- * @return {cc.Label::Overflow}
+ * @method getLetter
+ * @param {int} arg0
+ * @return {cc.Sprite}
  */
-getOverflow : function (
+getLetter : function (
+int 
 )
 {
-    return 0;
+    return cc.Sprite;
 },
 
 /**
@@ -12340,13 +12356,13 @@ color4b
 },
 
 /**
- * @method setColor
- * @param {color3b_object} arg0
+ * @method getOverflow
+ * @return {cc.Label::Overflow}
  */
-setColor : function (
-color3b 
+getOverflow : function (
 )
 {
+    return 0;
 },
 
 /**
@@ -12486,29 +12502,19 @@ float
 },
 
 /**
- * @method getLetter
- * @param {int} arg0
- * @return {cc.Sprite}
- */
-getLetter : function (
-int 
-)
-{
-    return cc.Sprite;
-},
-
-/**
  * @method createWithBMFont
  * @param {String} arg0
  * @param {String} arg1
- * @param {cc.TextHAlignment} arg2
- * @param {int} arg3
- * @param {vec2_object} arg4
+ * @param {cc.SpriteFrame} arg2
+ * @param {cc.TextHAlignment} arg3
+ * @param {int} arg4
+ * @param {vec2_object} arg5
  * @return {cc.Label}
  */
 createWithBMFont : function (
 str, 
 str, 
+spriteframe, 
 texthalignment, 
 int, 
 vec2 
